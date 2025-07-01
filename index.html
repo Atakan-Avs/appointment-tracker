@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Randevu Takvimi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📅 Randevu Takvimi</h1>
+            <p class="welcome-text">Hoş geldiniz, randevunuzu seçin!</p>
+        </header>
+
+        <main>
+            <!-- Randevu Ekleme Formu -->
+            <section class="appointment-form">
+                <h2>Yeni Randevu Ekle</h2>
+                <form id="appointmentForm">
+                    <div class="form-group">
+                        <label for="name">İsim:</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Tarih:</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="time">Saat:</label>
+                        <input type="time" id="time" name="time" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="doctor">Doktor:</label>
+                        <select id="doctor" name="doctor" required>
+                            <option value="">Doktor seçiniz</option>
+                            <option value="dr-ahmet-yilmaz">Dr. Yüksel Kaya - Kardiyoloji</option>
+                            <option value="dr-ayse-demir">Dr. Oğuzhan Özgür - Dahiliye</option>
+                            <option value="dr-mehmet-kaya">Dr. Berke Algün - Ortopedi</option>
+                            <option value="dr-fatma-ozturk">Dr. Atakan Avsever - Çocuk Sağlığı</option>
+                            <option value="dr-ali-celik">Dr. Emircan Üye - Nöroloji</option>
+                            <option value="dr-zeynep-arslan">Dr. Muzaffer Bayrak - Dermatoloji</option>
+                            <option value="acil-doktor">Acil Servis Doktoru</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="service">Hizmet:</label>
+                        <select id="service" name="service" required>
+                            <option value="">Hizmet seçiniz</option>
+                            <option value="konsultasyon">Konsültasyon</option>
+                            <option value="tedavi">Tedavi</option>
+                            <option value="kontrol">Kontrol</option>
+                            <option value="acil">Acil</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="addBtn">Randevu Ekle</button>
+                </form>
+            </section>
+
+            <!-- Randevu Listesi -->
+            <section class="appointments-list">
+                <h2>Randevularım</h2>
+                
+                <!-- Arama Kutusu -->
+                <div class="search-container">
+                    <input type="text" id="filter" placeholder="İsim veya Doktor Ara..." class="search-input">
+                </div>
+                
+                <ul id="appointments">
+                    <!-- Randevular JavaScript ile buraya eklenecek -->
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal - Randevu Detayları Onay -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Randevu Detayları</h2>
+            <div id="modalDetails">
+                <!-- Modal içeriği JavaScript ile doldurulacak -->
+            </div>
+            <div class="modal-buttons">
+                <button id="confirmBtn" class="btn-confirm">Onayla</button>
+                <button id="cancelBtn" class="btn-cancel">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
