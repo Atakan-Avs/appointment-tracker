@@ -1,4 +1,4 @@
-// dom elementleri secme 
+// Selecting DOM elements
 const appointmentForm = document.getElementById('appointmentForm');
 const appointmentList = document.getElementById('appointments');
 const modal = document.getElementById('modal');
@@ -8,86 +8,82 @@ const confirmBtn = document.getElementById('confirmBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const filterInput = document.getElementById('filter');
 
-
-//randevu saklamak icin array
+// Array to store appointments
 let appointments = [];
 let currentAppointment = null;
 let filteredAppointments = [];
 
-
-//sayfa yüklenince calısacak fonksiyon
+// Function to run when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    //form submit dinle
+    // Listen to form submit
     appointmentForm.addEventListener('submit', handleFormSubmit);
 
-    //modal eventleri
+    // Modal events
     closeBtn.addEventListener('click', closeModal);
     confirmBtn.addEventListener('click', confirmAppointment);
     cancelBtn.addEventListener('click', closeModal);
 
-    //modalın disina tiklandıgında kapat
+    // Close modal if clicked outside of modal content
     window.addEventListener('click', function(event) {
         if (event.target === modal) {
             closeModal();
         }
     });
-    
-    //esc ile modalı kapat
-    document.addEventListener('keydown',function(event) {
-        if (event.key === 'Escape'&& modal.style.display === 'block') {
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modal.style.display === 'block') {
             closeModal();
         }
     });
-    
 
-    //bugünün tarihini min olarak ayarla
+    // Set today’s date as minimum for date input
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('date').min = today;
 
-    //form alanina focus eventlerini ekle
+    // Add focus and blur events to form inputs
     addFormFocusEvents();
 
-    //arama filtreleme eventini ekle
+    // Add search filter event
     filterInput.addEventListener('input', filterAppointments);
 
-    //randevu listesine eventleri ekle
+    // Add events for appointment list (like double-click delete)
     addAppointmentListEvents();
 
-    //sağ tık eventleri ekle
+    // Disable right-click context menu
     addContextMenuEvents();
 
-    //hosgeldin mesajı
+    // Show welcome message
     showWelcomeMessage();
 
-    //baslangicta bos listeyi goster
+    // Show empty appointment list at start
     renderAppointments();
 });
 
-
-//load event - hosgeldin mesajı
+// Show welcome message when page loads
 function showWelcomeMessage() {
     const welcomeDiv = document.createElement('div');
     welcomeDiv.className = 'welcome-alert';
-    welcomeDiv.textContent = 'Randevu takviminize hoş geldiniz!';
+    welcomeDiv.textContent = 'Welcome to your appointment calendar!';
 
     document.body.appendChild(welcomeDiv);
 
-    //3 saniye sonra mesajı kaldır
+    // Remove message after 3 seconds
     setTimeout(() => {
         welcomeDiv.remove();
     }, 3000);
 }
 
-//focus/blur eventleri
+// Add focus and blur event listeners to form fields
 function addFormFocusEvents() {
     const formGroups = appointmentForm.querySelectorAll('.form-group');
 
     formGroups.forEach(group => {
         const input = group.querySelector('input, select');
 
-        input.addEventListener('focus' , function() {
+        input.addEventListener('focus', function() {
             group.classList.add('focused');
-            showValidationMessage(this , 'valid' , 'Bu alan zorunludur!');
+            showValidationMessage(this, 'valid', 'This field is required!');
         });
 
         input.addEventListener('blur', function() {
@@ -97,81 +93,81 @@ function addFormFocusEvents() {
     });
 }
 
-//input/Change eventleri - Real-time validasyon
+// Add input/change event listeners for real-time validation
 function addInputChangeEvents() {
     const nameInput = document.getElementById('name');
     const dateInput = document.getElementById('date');
     const doctorSelect = document.getElementById('doctor');
     const serviceSelect = document.getElementById('service');
-    
-    // İsim input event'i
+
+    // Name input event
     nameInput.addEventListener('input', function() {
         if (this.value.trim().length < 2) {
             this.style.borderColor = '#e53e3e';
-            showValidationMessage(this, 'invalid', 'İsim en az 2 karakter olmalıdır.');
+            showValidationMessage(this, 'invalid', 'Name must be at least 2 characters.');
         } else {
             this.style.borderColor = '#48bb78';
-            showValidationMessage(this, 'valid', 'İsim geçerli!');
+            showValidationMessage(this, 'valid', 'Name looks good!');
         }
     });
-    
-    // Tarih change event'i
+
+    // Date change event
     dateInput.addEventListener('change', function() {
         const selectedDate = new Date(this.value);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         if (selectedDate < today) {
             this.style.borderColor = '#e53e3e';
-            showValidationMessage(this, 'invalid', 'Geçmiş bir tarih seçemezsiniz.');
+            showValidationMessage(this, 'invalid', 'You cannot select a past date.');
         } else {
             this.style.borderColor = '#48bb78';
-            showValidationMessage(this, 'valid', 'Tarih seçildi!');
+            showValidationMessage(this, 'valid', 'Date selected!');
         }
     });
-    
-    // Doktor change event'i
+
+    // Doctor select change event
     doctorSelect.addEventListener('change', function() {
         if (this.value) {
             this.style.borderColor = '#48bb78';
-            showValidationMessage(this, 'valid', `${this.options[this.selectedIndex].text} seçildi!`);
-            
-            // Doktor seçildiğinde hizmetleri filtrele
+            showValidationMessage(this, 'valid', `${this.options[this.selectedIndex].text} selected!`);
+
+            // Filter services based on doctor selection
             filterServicesByDoctor(this.value);
         } else {
             this.style.borderColor = '#e53e3e';
-            showValidationMessage(this, 'invalid', 'Lütfen bir doktor seçiniz.');
-            
-            // Doktor seçimi kaldırıldığında tüm hizmetleri göster
+            showValidationMessage(this, 'invalid', 'Please select a doctor.');
+
+            // Reset services if no doctor selected
             resetServiceOptions();
         }
     });
-    
-    // Hizmet change event'i
+
+    // Service select change event
     serviceSelect.addEventListener('change', function() {
         if (this.value) {
             this.style.borderColor = '#48bb78';
-            showValidationMessage(this, 'valid', `${this.options[this.selectedIndex].text} seçildi!`);
+            showValidationMessage(this, 'valid', `${this.options[this.selectedIndex].text} selected!`);
         } else {
             this.style.borderColor = '#e53e3e';
-            showValidationMessage(this, 'invalid', 'Lütfen bir hizmet seçiniz.');
+            showValidationMessage(this, 'invalid', 'Please select a service.');
         }
     });
 }
 
-// Validasyon mesajı göster
+// Show validation message below input
 function showValidationMessage(element, type, message) {
-    // Önceki mesajı kaldır
+    // Remove previous message
     removeValidationMessage(element);
-    
+
     const messageDiv = document.createElement('div');
     messageDiv.className = `validation-message ${type}`;
     messageDiv.textContent = message;
-    
+
     element.parentElement.appendChild(messageDiv);
 }
 
-// Validasyon mesajını kaldır
+// Remove validation message
 function removeValidationMessage(element) {
     const existingMessage = element.parentElement.querySelector('.validation-message');
     if (existingMessage) {
@@ -179,186 +175,171 @@ function removeValidationMessage(element) {
     }
 }
 
-// Submit event - Form gönderimini engelle
+// Handle form submit event (prevent default and validate)
 function handleFormSubmit(event) {
-    event.preventDefault(); // Form gönderimini engelle
-    
-    // Form verilerini al
+    event.preventDefault();
+
     const formData = new FormData(appointmentForm);
     const appointment = {
-        id: Date.now(), // Benzersiz ID
+        id: Date.now(), // Unique ID
         name: formData.get('name'),
         date: formData.get('date'),
         time: formData.get('time'),
         doctor: formData.get('doctor'),
         service: formData.get('service'),
         createdAt: new Date().toISOString(),
-        confirmed: false // Onay durumu
+        confirmed: false
     };
-    
-    // Form validasyonu
+
+    // Validate appointment data
     if (!validateAppointment(appointment)) {
         return;
     }
-    
-    // Modal'da randevu detaylarını göster
+
+    // Show appointment details in modal
     showAppointmentModal(appointment);
 }
 
-// Randevu validasyonu
+// Validate appointment fields
 function validateAppointment(appointment) {
     if (!appointment.name.trim()) {
-        showMessage('Lütfen isim giriniz.', 'error');
+        showMessage('Please enter a name.', 'error');
         return false;
     }
-    
+
     if (!appointment.date) {
-        showMessage('Lütfen tarih seçiniz.', 'error');
+        showMessage('Please select a date.', 'error');
         return false;
     }
-    
+
     if (!appointment.time) {
-        showMessage('Lütfen saat seçiniz.', 'error');
+        showMessage('Please select a time.', 'error');
         return false;
     }
-    
+
     if (!appointment.doctor) {
-        showMessage('Lütfen doktor seçiniz.', 'error');
+        showMessage('Please select a doctor.', 'error');
         return false;
     }
-    
+
     if (!appointment.service) {
-        showMessage('Lütfen hizmet seçiniz.', 'error');
+        showMessage('Please select a service.', 'error');
         return false;
     }
-    
-    // Geçmiş tarih kontrolü
+
     const selectedDate = new Date(appointment.date + ' ' + appointment.time);
     const now = new Date();
-    
+
     if (selectedDate < now) {
-        showMessage('Geçmiş bir tarih seçemezsiniz.', 'error');
+        showMessage('You cannot select a past date and time.', 'error');
         return false;
     }
-    
+
     return true;
 }
 
-// Modal'da randevu detaylarını göster
+// Show appointment details modal
 function showAppointmentModal(appointment) {
     currentAppointment = appointment;
-    
+
     const serviceNames = {
-        'konsultasyon': 'Konsültasyon',
-        'tedavi': 'Tedavi',
-        'kontrol': 'Kontrol',
-        'acil': 'Acil'
+        'konsultasyon': 'Consultation',
+        'tedavi': 'Treatment',
+        'kontrol': 'Check-up',
+        'acil': 'Emergency'
     };
-    
+
     const doctorNames = {
-        'dr-ahmet-yilmaz': 'Dr. Yüksel Kaya - Kardiyoloji',
-        'dr-ayse-demir': 'Dr. Oğuzhan Özgür - Dahiliye',
-        'dr-mehmet-kaya': 'Dr. Berke Algün - Ortopedi',
-        'dr-fatma-ozturk': 'Dr. Atakan Avsever - Çocuk Sağlığı',
-        'dr-ali-celik': 'Dr. Emircan Üye - Nöroloji',
-        'dr-zeynep-arslan': 'Dr. Muzaffer Bayrak - Dermatoloji',
-        'acil-doktor': 'Acil Servis Doktoru'
+        'dr-ahmet-yilmaz': 'Dr. Yüksel Kaya - Cardiology',
+        'dr-ayse-demir': 'Dr. Oğuzhan Özgür - Internal Medicine',
+        'dr-mehmet-kaya': 'Dr. Berke Algün - Orthopedics',
+        'dr-fatma-ozturk': 'Dr. Atakan Avsever - Pediatrics',
+        'dr-ali-celik': 'Dr. Emircan Üye - Neurology',
+        'dr-zeynep-arslan': 'Dr. Muzaffer Bayrak - Dermatology',
+        'acil-doktor': 'Emergency Room Doctor'
     };
-    
-    // Eğer randevu zaten mevcut ise (düzenleme modu)
+
     const isExistingAppointment = appointments.find(apt => apt.id === appointment.id);
-    const modalTitle = isExistingAppointment ? 'Randevu Detayları' : 'Yeni Randevu Onayı';
-    const confirmButtonText = isExistingAppointment ? 'Onayla' : 'Ekle';
-    
+    const modalTitle = isExistingAppointment ? 'Appointment Details' : 'New Appointment Confirmation';
+    const confirmButtonText = isExistingAppointment ? 'Confirm' : 'Add';
+
     modalDetails.innerHTML = `
         <div style="background: #f7fafc; padding: 20px; border-radius: 10px; margin-bottom: 15px;">
-            <p><strong>İsim:</strong> ${appointment.name}</p>
-            <p><strong>Tarih:</strong> ${formatDate(appointment.date)}</p>
-            <p><strong>Saat:</strong> ${appointment.time}</p>
-            <p><strong>Doktor:</strong> ${doctorNames[appointment.doctor] || appointment.doctor}</p>
-            <p><strong>Hizmet:</strong> ${serviceNames[appointment.service]}</p>
+            <p><strong>Name:</strong> ${appointment.name}</p>
+            <p><strong>Date:</strong> ${formatDate(appointment.date)}</p>
+            <p><strong>Time:</strong> ${appointment.time}</p>
+            <p><strong>Doctor:</strong> ${doctorNames[appointment.doctor] || appointment.doctor}</p>
+            <p><strong>Service:</strong> ${serviceNames[appointment.service]}</p>
         </div>
         <p style="color: #4a5568; font-size: 0.9rem;">
-            ${isExistingAppointment ? 'Bu randevuyu onaylıyor musunuz?' : 'Bu randevu bilgilerini onaylıyor musunuz?'}
+            ${isExistingAppointment ? 'Do you confirm this appointment?' : 'Do you confirm the details of this appointment?'}
         </p>
     `;
-    
-    // Modal başlığını güncelle
+
     modal.querySelector('h2').textContent = modalTitle;
-    
-    // Onay butonunu güncelle
     confirmBtn.textContent = confirmButtonText;
-    
+
     modal.style.display = 'block';
-    document.body.style.overflow = 'hidden'; // Scroll'u engelle
+    document.body.style.overflow = 'hidden';
 }
 
-// Modal'ı kapat
+// Close modal
 function closeModal() {
     modal.style.display = 'none';
-    document.body.style.overflow = 'auto'; // Scroll'u geri aç
+    document.body.style.overflow = 'auto';
     currentAppointment = null;
 }
 
-// Randevuyu onayla
+// Confirm appointment (add or update)
 function confirmAppointment() {
     if (currentAppointment) {
-        // Eğer randevu zaten mevcut ise (düzenleme modu)
         const existingIndex = appointments.findIndex(apt => apt.id === currentAppointment.id);
-        
+
         if (existingIndex !== -1) {
-            // Mevcut randevuyu onayla (yeşil yap)
             appointments[existingIndex].confirmed = true;
-            showMessage('Randevu onaylandı!', 'success');
+            showMessage('Appointment confirmed!', 'success');
         } else {
-            // Yeni randevu ekle
             appointments.push(currentAppointment);
-            showMessage('Randevu başarıyla eklendi!', 'success');
-            
-            // Formu temizle (sadece yeni randevu eklendiğinde)
+            showMessage('Appointment added successfully!', 'success');
             appointmentForm.reset();
         }
-        
-        // Filtrelenmiş listeyi güncelle
+
         filterAppointments();
-        
-        // Modal'ı kapat
         closeModal();
     }
 }
 
-// Randevuları listele
+// Render appointment list
 function renderAppointments() {
     if (filteredAppointments.length === 0) {
-        appointmentList.innerHTML = '<li class="empty-message">Henüz randevu bulunmuyor.</li>';
+        appointmentList.innerHTML = '<li class="empty-message">No appointments found yet.</li>';
         return;
     }
-    
-    // Randevuları tarihe göre sırala
+
     filteredAppointments.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
-    
+
     appointmentList.innerHTML = filteredAppointments.map(appointment => {
         const serviceNames = {
-            'konsultasyon': 'Konsültasyon',
-            'tedavi': 'Tedavi',
-            'kontrol': 'Kontrol',
-            'acil': 'Acil'
+            'konsultasyon': 'Consultation',
+            'tedavi': 'Treatment',
+            'kontrol': 'Check-up',
+            'acil': 'Emergency'
         };
-        
+
         const doctorNames = {
-            'dr-ahmet-yilmaz': 'Dr. Yüksel Kaya - Kardiyoloji',
-            'dr-ayse-demir': 'Dr. Oğuzhan Özgür - Dahiliye',
-            'dr-mehmet-kaya': 'Dr. Berke Algün - Ortopedi',
-            'dr-fatma-ozturk': 'Dr. Atakan Avsever - Çocuk Sağlığı',
-            'dr-ali-celik': 'Dr. Emircan Üye - Nöroloji',
-            'dr-zeynep-arslan': 'Dr. Muzaffer Bayrak - Dermatoloji',
-            'acil-doktor': 'Acil Servis Doktoru'
+            'dr-ahmet-yilmaz': 'Dr. Yüksel Kaya - Cardiology',
+            'dr-ayse-demir': 'Dr. Oğuzhan Özgür - Internal Medicine',
+            'dr-mehmet-kaya': 'Dr. Berke Algün - Orthopedics',
+            'dr-fatma-ozturk': 'Dr. Atakan Avsever - Pediatrics',
+            'dr-ali-celik': 'Dr. Emircan Üye - Neurology',
+            'dr-zeynep-arslan': 'Dr. Muzaffer Bayrak - Dermatology',
+            'acil-doktor': 'Emergency Room Doctor'
         };
-        
+
         const confirmedClass = appointment.confirmed ? 'confirmed' : '';
         const emergencyClass = appointment.doctor === 'acil-doktor' ? 'emergency' : '';
         const doctorName = doctorNames[appointment.doctor] || appointment.doctor;
-        
+
         return `
             <li class="appointment-item ${confirmedClass} ${emergencyClass}" data-id="${appointment.id}" data-date="${appointment.date}" data-time="${appointment.time}">
                 <div class="appointment-header">
@@ -369,15 +350,15 @@ function renderAppointments() {
                 <div class="appointment-doctor">👨‍⚕️ ${doctorName}</div>
                 <span class="appointment-service">${serviceNames[appointment.service]}</span>
                 <div class="appointment-buttons">
-                    <button class="detail-btn" onclick="showAppointmentDetails(${appointment.id})">Detay</button>
-                    <button class="delete-btn" onclick="deleteAppointment(${appointment.id})">Sil</button>
+                    <button class="detail-btn" onclick="showAppointmentDetails(${appointment.id})">Details</button>
+                    <button class="delete-btn" onclick="deleteAppointment(${appointment.id})">Delete</button>
                 </div>
             </li>
         `;
     }).join('');
 }
 
-// Randevu detaylarını göster
+// Show appointment details modal by ID
 function showAppointmentDetails(id) {
     const appointment = appointments.find(apt => apt.id === id);
     if (appointment) {
@@ -385,82 +366,81 @@ function showAppointmentDetails(id) {
     }
 }
 
-// Randevu sil
+// Delete appointment by ID
 function deleteAppointment(id) {
-    if (confirm('Bu randevuyu silmek istediğinizden emin misiniz?')) {
+    if (confirm('Are you sure you want to delete this appointment?')) {
         appointments = appointments.filter(appointment => appointment.id !== id);
         filteredAppointments = filteredAppointments.filter(appointment => appointment.id !== id);
         renderAppointments();
-        showMessage('Randevu silindi.', 'success');
+        showMessage('Appointment deleted.', 'success');
     }
 }
 
-// Dblclick event - Çift tıklama ile silme
+// Add double-click event for deleting appointment
 function addAppointmentListEvents() {
     appointmentList.addEventListener('dblclick', function(event) {
         const appointmentItem = event.target.closest('.appointment-item');
         if (appointmentItem) {
             const appointmentId = parseInt(appointmentItem.dataset.id);
-            if (confirm('Çift tıklama ile randevuyu silmek istediğinizden emin misiniz?')) {
+            if (confirm('Are you sure you want to delete this appointment by double-click?')) {
                 deleteAppointment(appointmentId);
             }
         }
     });
 }
 
-// Contextmenu event - Sağ tık engelleme
+// Disable right-click context menu on appointment list
 function addContextMenuEvents() {
     appointmentList.addEventListener('contextmenu', function(event) {
-        event.preventDefault(); // Sağ tık menüsünü engelle
-        
-        // Uyarı mesajı göster
+        event.preventDefault();
+
+        // Show warning message
         showContextMenuWarning();
     });
 }
 
-// Sağ tık uyarısı göster
+// Show right-click disabled warning
 function showContextMenuWarning() {
     const warningDiv = document.createElement('div');
     warningDiv.className = 'context-menu-warning';
-    warningDiv.textContent = '⚠️ Sağ tık devre dışı.';
-    
+    warningDiv.textContent = '⚠️ Right-click is disabled.';
+
     document.body.appendChild(warningDiv);
-    
-    // 2 saniye sonra uyarıyı kaldır
+
     setTimeout(() => {
         warningDiv.remove();
     }, 2000);
 }
 
-// Arama filtreleme
+// Filter appointments based on search input
 function filterAppointments() {
     const searchTerm = filterInput.value.toLowerCase().trim();
-    
+
     if (searchTerm === '') {
         filteredAppointments = [...appointments];
     } else {
         filteredAppointments = appointments.filter(appointment => {
             const doctorNames = {
-                'dr-ahmet-yilmaz': 'Dr. Yüksel Kaya - Kardiyoloji',
-                'dr-ayse-demir': 'Dr. Oğuzhan Özgür - Dahiliye',
-                'dr-mehmet-kaya': 'Dr. Berke Algün - Ortopedi',
-                'dr-fatma-ozturk': 'Dr. Atakan Avsever - Çocuk Sağlığı',
-                'dr-ali-celik': 'Dr. Emircan Üye - Nöroloji',
-                'dr-zeynep-arslan': 'Dr. Muzaffer Bayrak - Dermatoloji',
-                'acil-doktor': 'Acil Servis Doktoru'
+                'dr-ahmet-yilmaz': 'Dr. Yüksel Kaya - Cardiology',
+                'dr-ayse-demir': 'Dr. Oğuzhan Özgür - Internal Medicine',
+                'dr-mehmet-kaya': 'Dr. Berke Algün - Orthopedics',
+                'dr-fatma-ozturk': 'Dr. Atakan Avsever - Pediatrics',
+                'dr-ali-celik': 'Dr. Emircan Üye - Neurology',
+                'dr-zeynep-arslan': 'Dr. Muzaffer Bayrak - Dermatology',
+                'acil-doktor': 'Emergency Room Doctor'
             };
-            
+
             const doctorName = doctorNames[appointment.doctor] || appointment.doctor;
-            
+
             return appointment.name.toLowerCase().includes(searchTerm) ||
                    doctorName.toLowerCase().includes(searchTerm);
         });
     }
-    
+
     renderAppointments();
 }
 
-// Tarih formatla
+// Format date to readable string
 function formatDate(dateString) {
     const date = new Date(dateString);
     const options = { 
@@ -469,31 +449,29 @@ function formatDate(dateString) {
         month: 'long', 
         day: 'numeric' 
     };
-    return date.toLocaleDateString('tr-TR', options);
+    return date.toLocaleDateString('en-US', options);
 }
 
-// Doktor seçimine göre hizmetleri filtrele
+// Filter service options based on selected doctor
 function filterServicesByDoctor(doctorId) {
     const serviceSelect = document.getElementById('service');
     const doctorServices = {
-        'dr-ahmet-yilmaz': ['konsultasyon', 'tedavi', 'kontrol'], // Kardiyoloji
-        'dr-ayse-demir': ['konsultasyon', 'tedavi', 'kontrol'], // Dahiliye
-        'dr-mehmet-kaya': ['tedavi', 'kontrol'], // Ortopedi
-        'dr-fatma-ozturk': ['konsultasyon', 'tedavi', 'kontrol'], // Çocuk Sağlığı
-        'dr-ali-celik': ['konsultasyon', 'tedavi'], // Nöroloji
-        'dr-zeynep-arslan': ['konsultasyon', 'tedavi', 'kontrol'], // Dermatoloji
-        'acil-doktor': ['acil'] // Acil Servis
+        'dr-ahmet-yilmaz': ['consultation', 'treatment', 'check-up'], // Cardiology
+        'dr-ayse-demir': ['consultation', 'treatment', 'check-up'], // Internal Medicine
+        'dr-mehmet-kaya': ['treatment', 'check-up'], // Orthopedics
+        'dr-fatma-ozturk': ['consultation', 'treatment', 'check-up'], // Pediatrics
+        'dr-ali-celik': ['consultation', 'treatment'], // Neurology
+        'dr-zeynep-arslan': ['consultation', 'treatment', 'check-up'], // Dermatology
+        'emergency-doctor': ['emergency'] // Emergency Room
     };
-    
+
     const availableServices = doctorServices[doctorId] || [];
-    
-    // Mevcut seçimi temizle
+
     serviceSelect.value = '';
-    
-    // Tüm option'ları gizle
+
     Array.from(serviceSelect.options).forEach(option => {
-        if (option.value === '') return; // "Hizmet seçiniz" option'ını atla
-        
+        if (option.value === '') return;
+
         if (availableServices.includes(option.value)) {
             option.style.display = '';
             option.disabled = false;
@@ -502,52 +480,47 @@ function filterServicesByDoctor(doctorId) {
             option.disabled = true;
         }
     });
-    
-    // Hizmet seçimini sıfırla
+
     serviceSelect.style.borderColor = '#e2e8f0';
     removeValidationMessage(serviceSelect);
 }
 
-// Hizmet seçeneklerini sıfırla
+// Reset service select options to show all
 function resetServiceOptions() {
     const serviceSelect = document.getElementById('service');
-    
-    // Tüm option'ları göster
+
     Array.from(serviceSelect.options).forEach(option => {
         option.style.display = '';
         option.disabled = false;
     });
-    
-    // Hizmet seçimini sıfırla
+
     serviceSelect.value = '';
     serviceSelect.style.borderColor = '#e2e8f0';
     removeValidationMessage(serviceSelect);
 }
 
-// Mesaj göster
+// Show message at top of page (success or error)
 function showMessage(message, type) {
-    // Önceki mesajları temizle
+    // Remove previous messages
     const existingMessages = document.querySelectorAll('.success-message, .error-message');
     existingMessages.forEach(msg => msg.remove());
-    
+
     const messageDiv = document.createElement('div');
     messageDiv.className = type === 'success' ? 'success-message' : 'error-message';
     messageDiv.textContent = message;
-    
-    // Mesajı sayfanın üstüne ekle
+
     const container = document.querySelector('.container');
     container.insertBefore(messageDiv, container.firstChild);
-    
-    // 3 saniye sonra mesajı kaldır
+
     setTimeout(() => {
         messageDiv.remove();
     }, 3000);
 }
 
-// Sayfa yüklendiğinde input/change event'lerini ekle
+// Add input/change event listeners after page load
 window.addEventListener('load', function() {
     addInputChangeEvents();
-    
+
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('date').min = today;
 });
